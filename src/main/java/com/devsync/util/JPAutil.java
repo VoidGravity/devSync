@@ -1,6 +1,5 @@
 package com.devsync.util;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
@@ -9,7 +8,7 @@ public class JPAutil {
 
     public static EntityManagerFactory EMF(){
        if(emf==null){
-           emf = Persistence.createEntityManagerFactory("DevSyncPU");
+           emf = Persistence.createEntityManagerFactory("default");
        }
        return emf;
 

@@ -10,6 +10,9 @@ public class User {
     @Column(name = "id", nullable = false)
     private Integer id;
 
+    @Enumerated(EnumType.STRING)
+    private  ManagerRole role;
+
     @Column(name = "username", nullable = false, length = 50)
     private String username;
 
@@ -24,9 +27,6 @@ public class User {
 
     @Column(name = "email", nullable = false, length = 100)
     private String email;
-
-    @Column(name = "manager_role", columnDefinition = "manager_role not null")
-    private Object managerRole;
 
     public Integer getId() {
         return id;
@@ -75,13 +75,13 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
-
-    public Object getManagerRole() {
-        return managerRole;
+    public void setManagerRole(ManagerRole role){
+        this.role = role;
     }
-
-    public void setManagerRole(Object managerRole) {
-        this.managerRole = managerRole;
-    }
-
+/*
+ TODO [Reverse Engineering] create field to map the 'manager_role' column
+ Available actions: Define target Java type | Uncomment as is | Remove column mapping
+    @Column(name = "manager_role", columnDefinition = "manager_role not null")
+    private Object managerRole;
+*/
 }

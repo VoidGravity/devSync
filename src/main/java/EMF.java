@@ -1,15 +1,29 @@
 // this is a file to test stuff and learn
 // curently testing EMF EM Optimisation
 
-import javax.persistence.*;
+
+import com.devsync.dao.UserDAO;
+import com.devsync.model.User;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+
+import java.util.List;
 
 public class EMF {
     public static void main(String[] args) {
-        Test1();
-        System.out.println("=======================================");
-        Test2();
+        UserDAO dao = new UserDAO();
 
+            List<User> users = dao.getUsers();
+        for(User user:users){
+            System.out.println(user.getUsername());
+        }
     }
+//    public static void main(String[] args) {
+//        Test1();
+//        System.out.println("=======================================");
+//        Test2();
+//
+//    }
     public static void Test1(){
         System.out.println("TEst1 : not closing EMF");
         long start = System.currentTimeMillis();
