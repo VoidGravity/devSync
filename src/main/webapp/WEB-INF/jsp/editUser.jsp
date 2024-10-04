@@ -1,3 +1,4 @@
+<%@ page import="com.devsync.model.User" %>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,35 +7,54 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
 <body>
-
-<div class="modal-dialog">
+<%
+    User user = (User)request.getAttribute("user");
+%>
+<div class="modal-dialog mt-5 " style="width: 500px">
     <div class="modal-content">
-        <form>
+        <form action="/user/update" method="post" >
             <div class="modal-header">
                 <h4 class="modal-title">Edit Employee</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Models</label>
-                    <input type="text" class="form-control" required>
+                    <label>username</label>
+                    <input type="text" name="username" class="form-control" value="<%=user.getUsername()%>" required>
                 </div>
                 <div class="form-group">
-                    <label>Status</label>
-                    <input type="email" class="form-control" required>
+                    <label>Password</label>
+
+                    <input type="password" name="password" class="form-control" value="<%=user.getPassword()%>" required>
                 </div>
                 <div class="form-group">
-                    <label>Schedule</label>
-                    <textarea class="form-control" required></textarea>
+                    <label>First Name</label>
+                    <input type="text" name="fname" value="<%=user.getFirstName()%>" class="form-control" required></input>
                 </div>
                 <div class="form-group">
-                    <label>Amount</label>
-                    <input type="text" class="form-control" required>
+                    <label>Last Name</label>
+                    <input type="text" name="lname" value="<%=user.getLastName()%>" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="<%=user.getEmail()%>" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Manager ROle</label>
+                    <select class="form-select" name="manager_role">
+                        <option value="MANAGER">Manager</option>
+                        <option value="TEAM_LEAD">Team Lead</option>
+                    </select>
+
                 </div>
             </div>
+            <input type="hidden" name="id" value="<%=user.getId()%>">
+<%--            <input type="hidden" value="testsgqdss">--%>
             <div class="modal-footer">
-                <a href="/" class="btn btn-default" >Cancel</a>
-                <button type="submit" class="btn btn-info" value="Save">
+                <a href="/user" class="btn btn-default" >Cancel</a>
+
+                <button type="submit" class="btn btn-info" value="Save">Update</button>
+
             </div>
         </form>
     </div>

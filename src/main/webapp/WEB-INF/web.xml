@@ -5,10 +5,11 @@
 <web-app>
     <display-name>Archetype Created Web Application</display-name>
 
+
     <welcome-file-list>
 
-      <welcome-file>home.jsp</welcome-file>
-<!--      <welcome-file>index.jsp</welcome-file>-->
+<!--      <welcome-file>home.jsp</welcome-file>-->
+      <welcome-file>index.jsp</welcome-file>
 
     </welcome-file-list>
 </web-app>

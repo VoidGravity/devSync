@@ -35,17 +35,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label>ROle needs to be input</label>
+                        <label>Manager ROle</label>
+                        <select class="form-select" name="manager_role">
+                            <option value="MANAGER">Manager</option>
+                            <option value="TEAM_LEAD">Team Lead</option>
+                        </select>
 
-                        <textarea class="form-control" required></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>Amount</label>
-                        <input type="text" class="form-control" required>
-                    </div>
+
                 </div>
+                
                 <div class="modal-footer">
-                    <a href="/" class="btn btn-default" >Cancel</a>
+                    <a href="/user" class="btn btn-default" >Cancel</a>
                     <button type="submit" class="btn btn-success">ADD</button>
 
                 </div>

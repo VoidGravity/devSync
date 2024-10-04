@@ -8,29 +8,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
 <body>
-<%
-    String name = "This is a test";
-    out.println("Hello, " + name);
-%>
 
-<%
-String test ="again";
-
-
-%>
-<%=test%>
-
-<%
-    List<User> users = (List<User>) request.getAttribute("users");
-    if (users != null && !users.isEmpty()) {
-        for (User user : users) {
-%>
-<%=user.getEmail()%>
-
-<%
-        }
-    }
-%>
+<p class="alert alert-success">
+    <%=request.getSession().getAttribute("messageSUcess")%>
+</p>
 
 <div class="container">
     <div class="table-wrapper">
@@ -45,30 +26,40 @@ String test ="again";
                 </div>
             </div>
         </div>
-
         <table class="table">
             <thead>
             <tr>
-
-                <th>Models</th>
-                <th>Status</th>
-                <th>Schedule</th>
-                <th>Amount</th>
+                <th>Email</th>
+                <th>UserName</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>ROle</th>
                 <th>Edit/Delate</th>
             </tr>
             </thead>
             <tbody>
-            <tr>
+                <%
 
-                <td>jquery.scrollTo.js</td>
-                <td>Available</td>
-                <td>0:33</td>
-                <td>$55</td>
+                    List<User> users = (List<User>)request.getAttribute("users");
+                for(User item : users){
+
+                %>
+            <tr>
+                <td><%=item.getEmail()%></td>
+                <td><%=item.getUsername()%></td>
+                <td><%=item.getFirstName()%></td>
+                <td><%=item.getLastName()%></td>
+                <td><%=item.getEmail()%></td>
+                <td><%=item.getManagerRole()%></td>
                 <td class="d-flex">
-                    <a href="#editEmployeeModal" class="btn btn-danger m-1" data-toggle="modal">Delete</a>
-                    <a href="#deleteEmployeeModal" class="btn btn-primary m-1" data-toggle="modal">Edit</a>
+                    <a href="/user/edit?id=<%=item.getId()%>" class="btn btn-primary m-1" data-toggle="modal">Edit</a>
+                    <a href="/user/delete?id=<%=item.getId()%>" class="btn btn-danger m-1" data-toggle="modal">Delete</a>
                 </td>
             </tr>
+            <%
+                }
+            %>
 
             </tbody>
         </table>

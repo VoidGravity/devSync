@@ -15,5 +15,15 @@ public class UserService {
         List<User> users = UserDAO.getUsers();
         return users;
     }
+    public User findUser(User user){
+       return UserDAO.findUser(user);
 
+    }
+    public void deleteUser(User user){
+        UserDAO.deleteUser(user);
+    }
+    public void updateUser(User user){
+
+    UserDAO.updateUser(user);
+    }
 }

@@ -78,6 +78,9 @@ public class User {
     public void setManagerRole(ManagerRole role){
         this.role = role;
     }
+    public Enum<ManagerRole> getManagerRole(){
+        return this.role;
+    }
 /*
  TODO [Reverse Engineering] create field to map the 'manager_role' column
  Available actions: Define target Java type | Uncomment as is | Remove column mapping

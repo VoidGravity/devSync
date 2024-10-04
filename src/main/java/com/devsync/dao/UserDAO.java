@@ -33,4 +33,29 @@ public class UserDAO {
         em.close();
         return users;
     }
+    public static User findUser(User user){
+        EntityManager em= emf.createEntityManager();
+        em.getTransaction().begin();
+        user=em.find(user.getClass(),user.getId());
+        em.getTransaction().commit();
+        em.close();
+        return user;
+    }
+    public static void deleteUser(User user){
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        em.find(User.class,user.getId());
+
+        em.remove(em.find(User.class,user.getId()));
+        em.getTransaction().commit();
+        em.close();
+    }
+
+    public static void updateUser(User user){
+        EntityManager em=emf.createEntityManager();
+        em.getTransaction().begin();
+        em.merge(user);
+        em.getTransaction().commit();
+        em.close();
+    }
 }
