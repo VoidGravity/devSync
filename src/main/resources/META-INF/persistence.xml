@@ -5,6 +5,7 @@
     <persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <class>com.devsync.model.User</class>
+
         <properties>
             <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5444/devsync"/>
             <property name="jakarta.persistence.jdbc.user" value="myuser"/>
