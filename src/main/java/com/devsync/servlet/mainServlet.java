@@ -20,8 +20,16 @@ import java.util.List;
 public class mainServlet extends HttpServlet {
     UserService userService = new UserService();
 
+//    @Override
+//    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+//        List<User> users = userService.getUsers();
+//
+//        req.setAttribute("users", users);
+//        req.getRequestDispatcher("home.jsp").forward(req, resp);
+//    }
+
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         List<User> users = userService.getUsers();
 
         req.setAttribute("users", users);
