@@ -50,13 +50,6 @@ public class UserDAO {
         em.close();
     }
 
-    public static void updateUser(User user){
-        EntityManager em=emf.createEntityManager();
-        em.getTransaction().begin();
-        em.merge(user);
-        em.getTransaction().commit();
-        em.close();
-    }
     public static boolean login(User user){
         EntityManager em = emf.createEntityManager();
         String sql = "Select u from User u where u.password=:password and u.username=:username";
@@ -88,6 +81,50 @@ public class UserDAO {
             return query.getSingleResult();
         } catch (NoResultException e) {
             return null;
+        } finally {
+            em.close();
+        }
+    }
+    public static List<User> getUsersUnderManager(User manager) {
+        EntityManager em = JPAutil.EMF().createEntityManager();
+        try {
+            TypedQuery<User> query = em.createQuery(
+                    "SELECT u FROM User u WHERE u.manager = :manager", User.class);
+            query.setParameter("manager", manager);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public static void updateUser(User user) {
+        EntityManager em = JPAutil.EMF().createEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.merge(user);
+            em.getTransaction().commit();
+        } finally {
+            em.close();
+        }
+    }
+
+    public static List<User> getUsersWithPendingChangeRequests() {
+        EntityManager em = JPAutil.EMF().createEntityManager();
+        try {
+            // Assuming there's a field in User entity to track pending change requests
+            TypedQuery<User> query = em.createQuery(
+                    "SELECT u FROM User u WHERE u.hasPendingChangeRequest = true", User.class);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+    public static void doubleModificationTokens(){
+        EntityManager em = JPAutil.EMF().createEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.createQuery("update User u set u.modificationTokens = u.modificationTokens * 2 where u.hasPendingChangeRequest = true").executeUpdate();
+            em.getTransaction().commit();
         } finally {
             em.close();
         }

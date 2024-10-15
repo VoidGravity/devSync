@@ -6,7 +6,9 @@ import com.devsync.model.Task;
 import com.devsync.model.User;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TaskService {
 
@@ -84,7 +86,30 @@ public class TaskService {
         TaskDAO.deleteTask(task);
     }
 
-   
+
+
+    public Task getTaskById(Long id) {
+        return TaskDAO.findTask(id);
+    }
+    public List<Task> getTasksForUser(User user) {
+        return TaskDAO.getTasksForUser(user);
+    }
+
+    //
+    public void replaceTask(Task oldTask, Task newTask, User newAssignee, User manager) {
+        if (!"MANAGER".equals(manager.getManagerRole().name())) {
+            throw new IllegalArgumentException("Only managers can replace tasks");
+        }
+
+        oldTask.setReplacedByManager(true);
+        oldTask.setModifiable(false);
+        TaskDAO.updateTask(oldTask);
+
+        newTask.setAssignedTo(newAssignee);
+        newTask.setCreatedBy(manager);
+        newTask.setCreationDate(new Date());
+        TaskDAO.create(newTask);
+    }
 
     public void markOverdueTasks() {
         List<Task> overdueTasks = TaskDAO.getOverdueTasks();
@@ -93,11 +118,34 @@ public class TaskService {
             TaskDAO.updateTask(task);
         }
     }
-    public Task getTaskById(Long id) {
-        return TaskDAO.findTask(id);
-    }
-    public List<Task> getTasksForUser(User user) {
-        return TaskDAO.getTasksForUser(user);
+
+    public Map<String, Object> getManagerDashboard(User manager, String timeFrame, String tagName) {
+        if (timeFrame == null) {
+            timeFrame = ""; // Default to empty string if null
+        }
+        if (tagName == null) {
+            tagName = ""; // Default to empty string if null
+        }
+
+        List<Task> tasks = TaskDAO.getTasksForManagerDashboard(manager, timeFrame, tagName);
+        int completedTasks = 0;
+        int totalTasks = tasks.size();
+
+        for (Task task : tasks) {
+            if (task.isCompleted()) {
+                completedTasks++;
+            }
+        }
+
+        double completionPercentage = totalTasks > 0 ? (completedTasks * 100.0) / totalTasks : 0;
+
+        Map<String, Object> dashboardData = new HashMap<>();
+        dashboardData.put("tasks", tasks);
+        dashboardData.put("completionPercentage", completionPercentage);
+        dashboardData.put("totalTasks", totalTasks);
+        dashboardData.put("completedTasks", completedTasks);
+
+        return dashboardData;
     }
 
 }

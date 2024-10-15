@@ -40,6 +40,9 @@ public class User {
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastTokenReset;
 
+
+
+
     public Integer getId() {
         return id;
     }
@@ -117,6 +120,10 @@ public class User {
     public void setLastTokenReset(Date lastTokenReset) {
         this.lastTokenReset = lastTokenReset;
     }
+    public void doubleModificationTokens(){
+        this.modificationTokens = this.modificationTokens * 2;
+    }
+
 /*
  TODO [Reverse Engineering] create field to map the 'manager_role' column
  Available actions: Define target Java type | Uncomment as is | Remove column mapping

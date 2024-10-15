@@ -44,6 +44,24 @@ public class Task {
     )
     private Set<Tag> tags;
 
+    private boolean replacedByManager;
+    private boolean modifiable;
+
+    public boolean isReplacedByManager() {
+        return replacedByManager;
+    }
+
+    public void setReplacedByManager(boolean replacedByManager) {
+        this.replacedByManager = replacedByManager;
+    }
+
+    public boolean isModifiable() {
+        return modifiable;
+    }
+
+    public void setModifiable(boolean modifiable) {
+        this.modifiable = modifiable;
+    }
 
     public Long getId() {
         return id;

@@ -3,6 +3,7 @@ package com.devsync.service;
 import com.devsync.dao.UserDAO;
 import com.devsync.model.User;
 
+import java.util.Date;
 import java.util.List;
 
 public class UserService {
@@ -36,6 +37,17 @@ public class UserService {
 
     public String getUserRole(User user){
         return UserDAO.getUserRole(user);
+    }
+    public void processChangeRequests() {
+        List<User> usersWithPendingRequests = UserDAO.getUsersWithPendingChangeRequests();
+        Date twelveHoursAgo = new Date(System.currentTimeMillis() - 12 * 60 * 60 * 1000);
+
+        for (User user : usersWithPendingRequests) {
+            if (user.getLastTokenReset() != null && user.getLastTokenReset().before(twelveHoursAgo)) {
+                user.doubleModificationTokens();
+                UserDAO.updateUser(user);
+            }
+        }
     }
 //    public User findUserByUsername(String username){
 //
