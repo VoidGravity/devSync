@@ -1,6 +1,6 @@
 package com.devsync.model;
 
-public enum ManagerRole {
+public enum Role {
     MANAGER,
-    TEAM_LEAD;
+    NORMAL_USER;
 }

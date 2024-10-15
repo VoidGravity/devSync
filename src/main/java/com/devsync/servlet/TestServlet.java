@@ -1,6 +1,6 @@
 package com.devsync.servlet;
 
-import com.devsync.model.ManagerRole;
+import com.devsync.model.Role;
 import com.devsync.model.User;
 import com.devsync.service.UserService;
 import jakarta.servlet.ServletException;
@@ -40,6 +40,9 @@ public class TestServlet extends HttpServlet {
                 userService.deleteUser(myuser);
                 resp.sendRedirect("/user");
                 break;
+            default:
+                req.getRequestDispatcher("/WEB-INF/jsp/home.jsp").forward(req,resp);
+                break;
         }
 
     }
@@ -62,11 +65,11 @@ public class TestServlet extends HttpServlet {
         user.setLastName(lname);
         user.setEmail(email);
         if(role.equals("MANAGER")){
-            ManagerRole managerRole = ManagerRole.MANAGER;
+            Role managerRole = Role.MANAGER;
             user.setManagerRole(managerRole);
 
         }else{
-            ManagerRole managerRole = ManagerRole.TEAM_LEAD;
+            Role managerRole = Role.NORMAL_USER;
             user.setManagerRole(managerRole);
 
         }

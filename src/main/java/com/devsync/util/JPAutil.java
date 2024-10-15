@@ -1,8 +1,9 @@
 package com.devsync.util;
 
+import jakarta.ejb.Singleton;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
-
+@Singleton
 public class JPAutil {
     private static EntityManagerFactory emf;
 

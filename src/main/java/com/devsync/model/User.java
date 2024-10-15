@@ -2,6 +2,8 @@ package com.devsync.model;
 
 import jakarta.persistence.*;
 
+import java.util.Date;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -11,7 +13,7 @@ public class User {
     private Integer id;
 
     @Enumerated(EnumType.STRING)
-    private  ManagerRole role;
+    private Role role;
 
     @Column(name = "username", nullable = false, length = 50)
     private String username;
@@ -27,6 +29,16 @@ public class User {
 
     @Column(name = "email", nullable = false, length = 100)
     private String email;
+
+    @Column(name = "modification_tokens", nullable = false)
+    private Integer modificationTokens = 2;
+
+    @Column(name = "deletion_tokens", nullable = false)
+    private Integer deletionTokens = 1;
+
+    @Column(name = "last_token_reset")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastTokenReset;
 
     public Integer getId() {
         return id;
@@ -75,11 +87,35 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
-    public void setManagerRole(ManagerRole role){
+
+    public void setManagerRole(Role role){
         this.role = role;
     }
-    public Enum<ManagerRole> getManagerRole(){
+    public Enum<Role> getManagerRole(){
         return this.role;
+    }
+    public Integer getModificationTokens() {
+        return modificationTokens;
+    }
+
+    public void setModificationTokens(Integer modificationTokens) {
+        this.modificationTokens = modificationTokens;
+    }
+
+    public Integer getDeletionTokens() {
+        return deletionTokens;
+    }
+
+    public void setDeletionTokens(Integer deletionTokens) {
+        this.deletionTokens = deletionTokens;
+    }
+
+    public Date getLastTokenReset() {
+        return lastTokenReset;
+    }
+
+    public void setLastTokenReset(Date lastTokenReset) {
+        this.lastTokenReset = lastTokenReset;
     }
 /*
  TODO [Reverse Engineering] create field to map the 'manager_role' column

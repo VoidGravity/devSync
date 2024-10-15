@@ -26,4 +26,19 @@ public class UserService {
 
     UserDAO.updateUser(user);
     }
+    public User login(String username, String password) {
+        User user = UserDAO.findUserByUsername(username);
+        if (user != null && user.getPassword().equals(password)) {
+            return user;
+        }
+        return null;
+    }
+
+    public String getUserRole(User user){
+        return UserDAO.getUserRole(user);
+    }
+//    public User findUserByUsername(String username){
+//
+//
+//    }
 }

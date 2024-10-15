@@ -15,7 +15,7 @@
 <div class="login-page">
     <div class="form">
 
-        <form class="login-form" method="post" action="/user">
+        <form class="login-form" method="post" action="auth_login">
             <input name="username" type="text" placeholder="username"/>
             <input  name="password" type="password" placeholder="password"/>
             <button type="submit">login</button>
