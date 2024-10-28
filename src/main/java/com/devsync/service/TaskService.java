@@ -1,24 +1,101 @@
 package com.devsync.service;
 
 import com.devsync.dao.TaskDAO;
-import com.devsync.dao.UserDAO;
 import com.devsync.model.Task;
 import com.devsync.model.User;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TaskService {
+    private static final Logger logger = Logger.getLogger(TaskService.class.getName());
 
     public void createTask(Task task, User user) throws IllegalArgumentException {
+        logger.info("Starting task creation validation");
+
+        validateTaskCreation(task);
+
+        task.setCreationDate(new Date());
+        task.setCreatedBy(user);
+        task.setAssignedTo(user);
+        task.setCompleted(false);
+
+        try {
+            TaskDAO.createTask(task);
+            logger.info("Task created successfully");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error in createTask", e);
+            throw new IllegalArgumentException("Failed to create task: " + e.getMessage());
+        }
+    }
+    public void markOverdueTasks() {
+        try {
+            List<Task> overdueTasks = TaskDAO.getOverdueTasks();
+            for (Task task : overdueTasks) {
+                if (!task.isCompleted()) {
+                    task.setCompleted(false);
+                    TaskDAO.updateTask(task);
+                }
+            }
+            logger.info("Marked " + overdueTasks.size() + " tasks as overdue");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error marking overdue tasks", e);
+            throw new RuntimeException("Failed to mark overdue tasks", e);
+        }
+    }
+
+    public Map<String, Object> getManagerDashboard(User manager, String timeFrame, String tagName) {
+        try {
+            if (manager == null) {
+                throw new IllegalArgumentException("Manager cannot be null");
+            }
+
+            List<Task> tasks = TaskDAO.getTasksForManagerDashboard(manager, timeFrame, tagName);
+
+            int completedTasks = 0;
+            int totalTasks = tasks.size();
+
+            for (Task task : tasks) {
+                if (task.isCompleted()) {
+                    completedTasks++;
+                }
+            }
+
+            double completionPercentage = totalTasks > 0 ?
+                    (completedTasks * 100.0) / totalTasks : 0;
+
+            Map<String, Object> dashboardData = new HashMap<>();
+            dashboardData.put("tasks", tasks);
+            dashboardData.put("completionPercentage", completionPercentage);
+            dashboardData.put("totalTasks", totalTasks);
+            dashboardData.put("completedTasks", completedTasks);
+
+            return dashboardData;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error generating manager dashboard", e);
+            throw new RuntimeException("Failed to generate manager dashboard: " + e.getMessage(), e);
+        }
+    }
+
+    private void validateTaskCreation(Task task) {
         Date currentDate = new Date();
+
+        if (task.getTitle() == null || task.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Task title cannot be empty");
+        }
+
+        if (task.getDueDate() == null) {
+            throw new IllegalArgumentException("Due date is required");
+        }
+
         if (task.getDueDate().before(currentDate)) {
             throw new IllegalArgumentException("Task cannot be created in the past");
         }
 
-        Date threeDaysLater = new Date(currentDate.getTime() + (3 * 24 * 60 * 60 * 1000));
+        Date threeDaysLater = new Date(currentDate.getTime() + (3 * 24 * 60 * 60 * 1000L));
         if (task.getDueDate().after(threeDaysLater)) {
             throw new IllegalArgumentException("Task cannot be scheduled more than 3 days in advance");
         }
@@ -26,126 +103,53 @@ public class TaskService {
         if (task.getTags() == null || task.getTags().size() < 2) {
             throw new IllegalArgumentException("Task must have at least 2 tags");
         }
-
-        task.setCreationDate(currentDate);
-        task.setCreatedBy(user);
-        task.setAssignedTo(user);
-        task.setCompleted(false);
-
-        TaskDAO.create(task);
     }
 
-    public void updateTask(Task task, User user) throws IllegalArgumentException {
+    public List<Task> getTasksForUser(User user) {
+        return TaskDAO.getTasksForUser(user);
+    }
+
+    public Task getTaskById(Long id) {
+        return TaskDAO.findTask(id);
+    }
+
+    public void updateTask(Task task, User user) {
         Task existingTask = TaskDAO.findTask(task.getId());
         if (existingTask == null) {
             throw new IllegalArgumentException("Task not found");
         }
 
-        if (!existingTask.getAssignedTo().getId().equals(user.getId()) && !user.getManagerRole().equals("MANAGER")) {
-            throw new IllegalArgumentException("You don't have permission to update this task");
+        if (!existingTask.getAssignedTo().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("You can only update your own tasks");
+        }
+
+        validateTaskUpdate(task);
+
+        try {
+            TaskDAO.updateTask(task);
+            logger.info("Task updated successfully");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error in updateTask", e);
+            throw new IllegalArgumentException("Failed to update task: " + e.getMessage());
+        }
+    }
+
+    private void validateTaskUpdate(Task task) {
+        if (task.getTitle() == null || task.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Task title cannot be empty");
+        }
+
+        if (task.getDueDate() == null) {
+            throw new IllegalArgumentException("Due date is required");
         }
 
         if (task.getDueDate().before(new Date())) {
-            throw new IllegalArgumentException("Task due date cannot be set in the past");
+            throw new IllegalArgumentException("Due date cannot be in the past");
         }
 
         if (task.getTags() == null || task.getTags().size() < 2) {
             throw new IllegalArgumentException("Task must have at least 2 tags");
         }
-
-        if (task.isCompleted() && task.getDueDate().before(new Date())) {
-            throw new IllegalArgumentException("Task cannot be marked as completed after the deadline");
-        }
-
-        if (!existingTask.getCreatedBy().getId().equals(user.getId()) && user.getModificationTokens() <= 0) {
-            throw new IllegalArgumentException("You don't have enough modification tokens");
-        }
-
-        TaskDAO.updateTask(task);
-
-        if (!existingTask.getCreatedBy().getId().equals(user.getId())) {
-            user.setModificationTokens(user.getModificationTokens() - 1);
-            UserDAO.updateUser(user);
-        }
-    }
-
-    public void deleteTask(Task task, User user) throws IllegalArgumentException {
-        Task existingTask = TaskDAO.findTask(task.getId());
-        if (existingTask == null) {
-            throw new IllegalArgumentException("Task not found");
-        }
-
-        if (!existingTask.getCreatedBy().getId().equals(user.getId()) && !user.getManagerRole().equals("MANAGER")) {
-            if (user.getDeletionTokens() <= 0) {
-                throw new IllegalArgumentException("You don't have enough deletion tokens");
-            }
-            user.setDeletionTokens(user.getDeletionTokens() - 1);
-            UserDAO.updateUser(user);
-        }
-
-        TaskDAO.deleteTask(task);
-    }
-
-
-
-    public Task getTaskById(Long id) {
-        return TaskDAO.findTask(id);
-    }
-    public List<Task> getTasksForUser(User user) {
-        return TaskDAO.getTasksForUser(user);
-    }
-
-    //
-    public void replaceTask(Task oldTask, Task newTask, User newAssignee, User manager) {
-        if (!"MANAGER".equals(manager.getManagerRole().name())) {
-            throw new IllegalArgumentException("Only managers can replace tasks");
-        }
-
-        oldTask.setReplacedByManager(true);
-        oldTask.setModifiable(false);
-        TaskDAO.updateTask(oldTask);
-
-        newTask.setAssignedTo(newAssignee);
-        newTask.setCreatedBy(manager);
-        newTask.setCreationDate(new Date());
-        TaskDAO.create(newTask);
-    }
-
-    public void markOverdueTasks() {
-        List<Task> overdueTasks = TaskDAO.getOverdueTasks();
-        for (Task task : overdueTasks) {
-            task.setCompleted(false);
-            TaskDAO.updateTask(task);
-        }
-    }
-
-    public Map<String, Object> getManagerDashboard(User manager, String timeFrame, String tagName) {
-        if (timeFrame == null) {
-            timeFrame = ""; // Default to empty string if null
-        }
-        if (tagName == null) {
-            tagName = ""; // Default to empty string if null
-        }
-
-        List<Task> tasks = TaskDAO.getTasksForManagerDashboard(manager, timeFrame, tagName);
-        int completedTasks = 0;
-        int totalTasks = tasks.size();
-
-        for (Task task : tasks) {
-            if (task.isCompleted()) {
-                completedTasks++;
-            }
-        }
-
-        double completionPercentage = totalTasks > 0 ? (completedTasks * 100.0) / totalTasks : 0;
-
-        Map<String, Object> dashboardData = new HashMap<>();
-        dashboardData.put("tasks", tasks);
-        dashboardData.put("completionPercentage", completionPercentage);
-        dashboardData.put("totalTasks", totalTasks);
-        dashboardData.put("completedTasks", completedTasks);
-
-        return dashboardData;
     }
 
 }

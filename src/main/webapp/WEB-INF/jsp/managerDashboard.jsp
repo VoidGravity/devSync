@@ -1,69 +1,150 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="com.devsync.model.Task" %>
 <%@ page import="com.devsync.model.Tag" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Manager Dashboard</title>
+    <style>
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .filters {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .task-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .task-list th, .task-list td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .task-list th {
+            background-color: #f5f5f5;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            margin: 2px;
+            border-radius: 3px;
+            background-color: #e0e0e0;
+        }
+    </style>
 </head>
 <body>
-<h1>Manager Dashboard</h1>
+<h2>Manager Dashboard</h2>
 
-<form action="<%=request.getContextPath()%>/app/manager/dashboard" method="get">
-    <select name="timeFrame">
-        <option value="week">This Week</option>
-        <option value="month">This Month</option>
-        <option value="year">This Year</option>
-    </select>
-    <select name="tag">
-        <%
-            List<Tag> tags = (List<Tag>) request.getAttribute("tags");
-            if (tags != null) {
-                for (Tag tag : tags) {
-        %>
-        <option value="<%= tag.getName() %>"><%= tag.getName() %></option>
-        <%
+<div class="filters">
+    <form method="get">
+        <label for="timeFrame">Time Frame:</label>
+        <select name="timeFrame" id="timeFrame">
+            <option value="week" <%= "week".equals(request.getParameter("timeFrame")) ? "selected" : "" %>>Last Week</option>
+            <option value="month" <%= "month".equals(request.getParameter("timeFrame")) ? "selected" : "" %>>Last Month</option>
+            <option value="year" <%= "year".equals(request.getParameter("timeFrame")) ? "selected" : "" %>>Last Year</option>
+        </select>
+
+        <label for="tag">Filter by Tag:</label>
+        <select name="tag" id="tag">
+            <option value="">All Tags</option>
+            <%
+                List<Tag> tags = (List<Tag>) request.getAttribute("tags");
+                if (tags != null) {
+                    for (com.devsync.model.Tag tag : tags) {
+                        boolean selected = tag.getName().equals(request.getParameter("tag"));
+            %>
+            <option value="<%= tag.getName() %>" <%= selected ? "selected" : "" %>><%= tag.getName() %></option>
+            <%
+                    }
                 }
-            }
-        %>
-    </select>
-    <input type="submit" value="Filter">
-</form>
+            %>
+        </select>
+
+        <button type="submit">Apply Filters</button>
+    </form>
+</div>
 
 <%
     Map<String, Object> dashboardData = (Map<String, Object>) request.getAttribute("dashboardData");
     if (dashboardData != null) {
 %>
-<h2>Task Completion</h2>
-<p>Completion Percentage: <%= dashboardData.get("completionPercentage") %>%</p>
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <h3>Total Tasks</h3>
+        <p><%= dashboardData.get("totalTasks") %></p>
+    </div>
+    <div class="stat-card">
+        <h3>Completed Tasks</h3>
+        <p><%= dashboardData.get("completedTasks") %></p>
+    </div>
+    <div class="stat-card">
+        <h3>Completion Rate</h3>
+        <p><%= String.format("%.1f%%", dashboardData.get("completionPercentage")) %></p>
+    </div>
+</div>
 
-<h2>Tasks</h2>
-<table border="1">
+<h3>Task List</h3>
+<table class="task-list">
+    <thead>
     <tr>
         <th>Title</th>
         <th>Assigned To</th>
         <th>Due Date</th>
         <th>Status</th>
+        <th>Tags</th>
     </tr>
+    </thead>
+    <tbody>
     <%
-        List<Task> tasks = (List<Task>) dashboardData.get("tasks");
-        if (tasks != null) {
-            for (Task task : tasks) {
+        @SuppressWarnings("unchecked")
+        List<com.devsync.model.Task> tasks = (List<com.devsync.model.Task>) dashboardData.get("tasks");
+        if (tasks != null && !tasks.isEmpty()) {
+            java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            for (com.devsync.model.Task task : tasks) {
     %>
     <tr>
         <td><%= task.getTitle() %></td>
         <td><%= task.getAssignedTo().getUsername() %></td>
-        <td><%= task.getDueDate() %></td>
+        <td><%= dateFormat.format(task.getDueDate()) %></td>
         <td><%= task.isCompleted() ? "Completed" : "Pending" %></td>
+        <td>
+            <%
+                if (task.getTags() != null) {
+                    for (com.devsync.model.Tag tag : task.getTags()) {
+            %>
+            <span class="tag"><%= tag.getName() %></span>
+            <%
+                    }
+                }
+            %>
+        </td>
     </tr>
     <%
-            }
         }
+    } else {
     %>
+    <tr>
+        <td colspan="5">No tasks found</td>
+    </tr>
+    <% } %>
+    </tbody>
 </table>
-<%
-    }
-%>
+<% } %>
 </body>
 </html>

@@ -1,90 +1,81 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="com.devsync.model.Task" %>
 <%@ page import="com.devsync.model.Tag" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Set" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Task List</title>
     <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .action-buttons a {
-            margin-right: 10px;
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-        }
-        .edit-btn {
+        .task-list { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .task-list th, .task-list td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        .task-list th { background-color: #f5f5f5; }
+        .tag { display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 3px; background-color: #e0e0e0; }
+        .completed { background-color: #e8f5e9; }
+        .overdue { background-color: #ffebee; }
+        .create-button {
+            display: inline-block;
+            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
-        }
-        .delete-btn {
-            background-color: #f44336;
-            color: white;
-        }
-        .create-btn {
-            background-color: #008CBA;
-            color: white;
-            padding: 10px 15px;
             text-decoration: none;
-            display: inline-block;
+            border-radius: 4px;
             margin-bottom: 20px;
         }
+        .error { color: red; margin: 10px 0; }
     </style>
 </head>
 <body>
-<h1>Your Tasks</h1>
+<h2>My Tasks</h2>
 
-<a href="${pageContext.request.contextPath}/task/create" class="create-btn">Create New Task</a>
+<a href="<%= request.getContextPath() %>/task/create" class="create-button">Create New Task</a>
 
-<table>
+<% if (request.getAttribute("error") != null) { %>
+<div class="error"><%= request.getAttribute("error") %></div>
+<% } %>
+
+<table class="task-list">
+    <thead>
     <tr>
         <th>Title</th>
         <th>Description</th>
         <th>Due Date</th>
         <th>Tags</th>
+        <th>Status</th>
         <th>Actions</th>
     </tr>
+    </thead>
+    <tbody>
     <%
-        List<Task> tasks = (List<Task>)request.getAttribute("tasks");
+        List<Task> tasks = (List<Task>) request.getAttribute("tasks");
         if (tasks != null && !tasks.isEmpty()) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date now = new Date();
+
             for (Task task : tasks) {
+                boolean isOverdue = task.getDueDate().before(now) && !task.isCompleted();
+                String rowClass = task.isCompleted() ? "completed" : (isOverdue ? "overdue" : "");
     %>
-    <tr>
+    <tr class="<%= rowClass %>">
         <td><%= task.getTitle() %></td>
-        <td><%= task.getDescription() %></td>
-        <td><%= task.getDueDate() %></td>
+        <td><%= task.getDescription() != null ? task.getDescription() : "" %></td>
+        <td><%= dateFormat.format(task.getDueDate()) %></td>
         <td>
             <%
-                Set<Tag> tags = task.getTags();
-                if (tags != null && !tags.isEmpty()) {
-                    boolean first = true;
-                    for (Tag tag : tags) {
-                        if (!first) {
-                            out.print(", ");
-                        }
-                        out.print(tag.getName());
-                        first = false;
+                if (task.getTags() != null) {
+                    for (com.devsync.model.Tag tag : task.getTags()) {
+            %>
+            <span class="tag"><%= tag.getName() %></span>
+            <%
                     }
-                } else {
-                    out.print("No tags");
                 }
             %>
         </td>
-        <td class="action-buttons">
-            <a href="${pageContext.request.contextPath}/task/edit?id=<%= task.getId() %>" class="edit-btn">Edit</a>
-            <a href="${pageContext.request.contextPath}/task/delete?id=<%= task.getId() %>" class="delete-btn" onclick="return confirm('Are you sure you want to delete this task?');">Delete</a>
+        <td><%= task.isCompleted() ? "Completed" : "Pending" %></td>
+        <td>
+            <a href="<%= request.getContextPath() %>/task/edit?id=<%= task.getId() %>">Edit</a>
         </td>
     </tr>
     <%
@@ -92,11 +83,10 @@
     } else {
     %>
     <tr>
-        <td colspan="5">No tasks found</td>
+        <td colspan="6">No tasks found</td>
     </tr>
-    <%
-        }
-    %>
+    <% } %>
+    </tbody>
 </table>
 </body>
 </html>

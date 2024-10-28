@@ -32,7 +32,7 @@ public class AuthServlet extends HttpServlet {
             HttpSession session = request.getSession(true);
             session.setAttribute("user", authenticatedUser);
             // Redirect to the user's dashboard or home page
-            response.sendRedirect(request.getContextPath() + "/user");
+            response.sendRedirect(request.getContextPath() + "/dash");
         } else {
             // Authentication failed
             request.setAttribute("error", "Invalid username or password");

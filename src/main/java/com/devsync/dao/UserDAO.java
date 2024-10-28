@@ -3,129 +3,144 @@ package com.devsync.dao;
 import com.devsync.model.User;
 import com.devsync.util.JPAutil;
 import jakarta.persistence.*;
-
-import java.util.ArrayList;
 import java.util.List;
 
-
 public class UserDAO {
+    private EntityManager em;
 
-    static EntityManagerFactory emf= JPAutil.EMF();
-    static List<User> users = new ArrayList<>();
-
-
-    public static void create(User user){
-
-        EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        em.persist(user);
-        em.getTransaction().commit();
-        em.close();
-    }
-    public static List<User> getUsers(){
-        EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        String q = "select u from User u";
-        users = em.createQuery(q,User.class).getResultList();
-        em.getTransaction().commit();
-
-        em.close();
-        return users;
-    }
-    public static User findUser(User user){
-        EntityManager em= emf.createEntityManager();
-        em.getTransaction().begin();
-        user=em.find(user.getClass(),user.getId());
-        em.getTransaction().commit();
-        em.close();
-        return user;
-    }
-    public static void deleteUser(User user){
-        EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        em.find(User.class,user.getId());
-
-        em.remove(em.find(User.class,user.getId()));
-        em.getTransaction().commit();
-        em.close();
+    public UserDAO() {
+        this.em = JPAutil.EMF().createEntityManager();
     }
 
-    public static boolean login(User user){
-        EntityManager em = emf.createEntityManager();
-        String sql = "Select u from User u where u.password=:password and u.username=:username";
+    public User findUser(User user) {
+        if (user == null || user.getId() == null) {
+            return null;
+        }
 
-        try{
-            em.createQuery(sql,User.class).setParameter("username",user.getUsername()).setParameter("password",user.getPassword()).getSingleResult();
-            return true;
+        try {
+            return em.find(User.class, user.getId());
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }finally {
-            em.close();
+            return null;
         }
     }
-    public static String getUserRole(User user){
-        EntityManager em = emf.createEntityManager();
-
-        String sql = "Select u.role from User u where u.password=:password and u.username=:username";
-        System.out.println("here is the result : ");
-        System.out.println(String.valueOf(em.createQuery(sql, User.class).setParameter("username",user.getUsername()).setParameter("password",user.getPassword()).getSingleResult()));
-        System.out.println("end");
-        return String.valueOf(em.createQuery(sql, User.class).setParameter("username",user.getUsername()).setParameter("password",user.getPassword()).getSingleResult());
-    }
-    public static User findUserByUsername(String username) {
-        EntityManager em = JPAutil.EMF().createEntityManager();
+    public List<User> getUsersWithPendingChangeRequests() {
         try {
-            TypedQuery<User> query = em.createQuery("SELECT u FROM User u WHERE u.username = :username", User.class);
+            TypedQuery<User> query = em.createQuery(
+                    "SELECT u FROM User u WHERE u.hasPendingChangeRequest = true",
+                    User.class
+            );
+            return query.getResultList();
+        } catch (Exception e) {
+            return List.of(); // Return empty list instead of null
+        }
+    }
+    public String getUserRole(User user) {
+        if (user == null) return null;
+
+        try {
+            String sql = "SELECT u.role FROM User u WHERE u.username = :username AND u.password = :password";
+            TypedQuery<String> query = em.createQuery(sql, String.class);
+            query.setParameter("username", user.getUsername());
+            query.setParameter("password", user.getPassword());
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // For testing purposes
+    public UserDAO(EntityManager em) {
+        this.em = em;
+    }
+
+    public boolean create(User user) {
+        if (user == null) return false;
+
+        try {
+            em.getTransaction().begin();
+            em.persist(user);
+            em.getTransaction().commit();
+            return true;
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            return false;
+        }
+    }
+
+    public User findUserByUsername(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            TypedQuery<User> query = em.createQuery(
+                    "SELECT u FROM User u WHERE u.username = :username",
+                    User.class
+            );
             query.setParameter("username", username);
             return query.getSingleResult();
         } catch (NoResultException e) {
             return null;
-        } finally {
-            em.close();
-        }
-    }
-    public static List<User> getUsersUnderManager(User manager) {
-        EntityManager em = JPAutil.EMF().createEntityManager();
-        try {
-            TypedQuery<User> query = em.createQuery(
-                    "SELECT u FROM User u WHERE u.manager = :manager", User.class);
-            query.setParameter("manager", manager);
-            return query.getResultList();
-        } finally {
-            em.close();
         }
     }
 
-    public static void updateUser(User user) {
-        EntityManager em = JPAutil.EMF().createEntityManager();
+    public User getUserById(int id) {
+        if (id <= 0) return null;
+
         try {
+            return em.find(User.class, id);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public List<User> getUsers() {
+        try {
+            TypedQuery<User> query = em.createQuery("SELECT u FROM User u", User.class);
+            return query.getResultList();
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    public void updateUser(User user) {
+//        if (user == null || user.getId() == null) return;
+
+//        try {
             em.getTransaction().begin();
             em.merge(user);
             em.getTransaction().commit();
-        } finally {
-            em.close();
+//        } catch (Exception e) {
+//            if (em.getTransaction().isActive()) {
+//                em.getTransaction().rollback();
+//            }
+//        }
+    }
+
+    public void deleteUser(User user) {
+        if (user == null || user.getId() == null) return;
+
+        try {
+            em.getTransaction().begin();
+            User managedUser = em.find(User.class, user.getId());
+            if (managedUser != null) {
+                em.remove(managedUser);
+            }
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
         }
     }
 
-    public static List<User> getUsersWithPendingChangeRequests() {
-        EntityManager em = JPAutil.EMF().createEntityManager();
-        try {
-            // Assuming there's a field in User entity to track pending change requests
-            TypedQuery<User> query = em.createQuery(
-                    "SELECT u FROM User u WHERE u.hasPendingChangeRequest = true", User.class);
-            return query.getResultList();
-        } finally {
-            em.close();
-        }
-    }
-    public static void doubleModificationTokens(){
-        EntityManager em = JPAutil.EMF().createEntityManager();
-        try {
-            em.getTransaction().begin();
-            em.createQuery("update User u set u.modificationTokens = u.modificationTokens * 2 where u.hasPendingChangeRequest = true").executeUpdate();
-            em.getTransaction().commit();
-        } finally {
+    public void close() {
+        if (em != null && em.isOpen()) {
             em.close();
         }
     }

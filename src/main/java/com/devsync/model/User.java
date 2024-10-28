@@ -3,6 +3,7 @@ package com.devsync.model;
 import jakarta.persistence.*;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -10,8 +11,13 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
+
+
     private Integer id;
 
+//    public User() {
+//        this.id = UUID.randomUUID().toString();  // Generate UUID for the ID field
+//    }
     @Enumerated(EnumType.STRING)
     private Role role;
 

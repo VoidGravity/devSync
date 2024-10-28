@@ -1,6 +1,8 @@
 package com.devsync.web;
 
 import com.devsync.model.User;
+import com.devsync.service.SchedulerService;
+import com.devsync.service.TaskService;
 import com.devsync.service.UserService;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
@@ -12,10 +14,12 @@ import java.io.IOException;
 @WebFilter(urlPatterns = {"/user/*", "/task/*"})  // Add any other paths you want to protect
 public class WebFilterServlet implements Filter {
     private UserService userService;
-
+    private SchedulerService scheduler;
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         userService = new UserService();
+        scheduler = new SchedulerService(new TaskService(), userService);
+        scheduler.startScheduledTasks();
     }
 
     @Override

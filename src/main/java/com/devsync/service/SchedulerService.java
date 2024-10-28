@@ -1,5 +1,9 @@
 package com.devsync.service;
 
+import com.devsync.dao.UserDAO;
+import com.devsync.model.User;
+
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +19,6 @@ public class SchedulerService {
     }
 
     public void startScheduledTasks() {
-        // Run every 24 hours
         scheduler.scheduleAtFixedRate(this::dailyTasks, 0, 24, TimeUnit.HOURS);
     }
 
@@ -23,6 +26,7 @@ public class SchedulerService {
         taskService.markOverdueTasks();
         userService.processChangeRequests();
     }
+
 
     public void shutdown() {
         scheduler.shutdown();

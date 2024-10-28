@@ -1,7 +1,6 @@
 package com.devsync.model;
 
 import jakarta.persistence.*;
-import java.util.Set;
 
 @Entity
 @Table(name = "tags")
@@ -12,10 +11,9 @@ public class Tag {
 
     @Column(nullable = false, unique = true)
     private String name;
-
-    @ManyToMany(mappedBy = "tags")
-    private Set<Task> tasks;
-
+//!
+//    @Column
+//    private String color;
 
     public Long getId() {
         return id;
@@ -33,11 +31,11 @@ public class Tag {
         this.name = name;
     }
 
-    public Set<Task> getTasks() {
-        return tasks;
-    }
-
-    public void setTasks(Set<Task> tasks) {
-        this.tasks = tasks;
-    }
+//    public String getColor() {
+//        return color;
+//    }
+//
+//    public void setColor(String color) {
+//        this.color = color;
+//    }
 }

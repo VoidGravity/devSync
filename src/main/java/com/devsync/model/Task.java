@@ -36,32 +36,13 @@ public class Task {
     @Column(nullable = false)
     private boolean completed;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "task_tags",
             joinColumns = @JoinColumn(name = "task_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     private Set<Tag> tags;
-
-    private boolean replacedByManager;
-    private boolean modifiable;
-
-    public boolean isReplacedByManager() {
-        return replacedByManager;
-    }
-
-    public void setReplacedByManager(boolean replacedByManager) {
-        this.replacedByManager = replacedByManager;
-    }
-
-    public boolean isModifiable() {
-        return modifiable;
-    }
-
-    public void setModifiable(boolean modifiable) {
-        this.modifiable = modifiable;
-    }
 
     public Long getId() {
         return id;
