@@ -36,6 +36,28 @@ public class Task {
     @Column(nullable = false)
     private boolean completed;
 
+    public boolean isReplacedByManager() {
+        return replacedByManager;
+    }
+
+    public void setReplacedByManager(boolean replacedByManager) {
+        this.replacedByManager = replacedByManager;
+    }
+
+    public boolean isModifiable() {
+        return modifiable;
+    }
+
+    public void setModifiable(boolean modifiable) {
+        this.modifiable = modifiable;
+    }
+
+    @Column(name = "replaced_by_manager")
+    private boolean replacedByManager;
+
+    @Column(name = "modifiable")
+    private boolean modifiable = true;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "task_tags",

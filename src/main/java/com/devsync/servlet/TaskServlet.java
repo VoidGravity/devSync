@@ -5,6 +5,7 @@ import com.devsync.model.User;
 import com.devsync.model.Tag;
 import com.devsync.service.TaskService;
 import com.devsync.service.TagService;
+import com.devsync.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -25,12 +26,15 @@ public class TaskServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(TaskServlet.class.getName());
     private TaskService taskService;
     private TagService tagService;
+    private UserService userService;
 
     @Override
     public void init() throws ServletException {
         super.init();
         taskService = new TaskService();
         tagService = new TagService();
+        userService = new UserService();
+
     }
 
     @Override
@@ -96,6 +100,9 @@ public class TaskServlet extends HttpServlet {
             case "/edit":
                 handleEdit(req, resp, user);
                 break;
+            case "/replace":
+                handleReplaceGet(req, resp, user);
+                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/task/list");
                 break;
@@ -133,6 +140,9 @@ public class TaskServlet extends HttpServlet {
                     break;
                 case "/update":
                     handleUpdate(req, resp, user);
+                    break;
+                case "/replace":
+                    handleReplacePost(req, resp, user);
                     break;
                 default:
                     resp.sendRedirect(req.getContextPath() + "/task/list");
@@ -219,4 +229,70 @@ public class TaskServlet extends HttpServlet {
             handleEdit(req, resp, user);
         }
     }
-}
+    private void handleReplaceGet(HttpServletRequest req, HttpServletResponse resp, User manager) throws ServletException, IOException {
+//        if (!"MANAGER".equals(manager.getManagerRole())) {
+//            resp.sendRedirect(req.getContextPath() + "/task/list");
+//            return;
+//        }
+
+        String taskId = req.getParameter("id");
+        if (taskId != null) {
+            Task task = taskService.getTaskById(Long.parseLong(taskId));
+            if (task != null && !task.isReplacedByManager()) {
+                req.setAttribute("oldTask", task);
+                req.setAttribute("tags", tagService.getAllTags());
+                req.setAttribute("users", userService.getUsers()); // Changed to getUsers()
+                req.getRequestDispatcher("/WEB-INF/jsp/replaceTask.jsp").forward(req, resp);
+                return;
+            }
+        }
+        resp.sendRedirect(req.getContextPath() + "/app/manager/dashboard");
+    }
+
+    private void handleReplacePost(HttpServletRequest req, HttpServletResponse resp, User manager) throws ServletException, IOException {
+//        if (!"MANAGER".equals(manager.getManagerRole())) {
+//            resp.sendRedirect(req.getContextPath() + "/task/list");
+//            return;
+//        }
+
+        try {
+            // Get the old task
+            Long oldTaskId = Long.parseLong(req.getParameter("oldTaskId"));
+            Task oldTask = taskService.getTaskById(oldTaskId);
+
+            // Create the new task
+            Task newTask = new Task();
+            newTask.setTitle(req.getParameter("title"));
+            newTask.setDescription(req.getParameter("description"));
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            newTask.setDueDate(dateFormat.parse(req.getParameter("dueDate")));
+
+            // Get the new assignee - using Long.parseLong() instead of casting to int
+//            int userId = Long.parseLong(req.getParameter("assignedTo"));
+            User newAssignee = userService.getUserById(Integer.parseInt(req.getParameter("assignedTo")));
+//            User newAssignee = userService.getUserById(Long.valueOf(req.getParameter("assignedTo")));
+
+            // Handle tags
+            Set<Tag> tags = new HashSet<>();
+            String[] tagIds = req.getParameterValues("tags");
+            if (tagIds != null) {
+                for (String tagId : tagIds) {
+                    Tag tag = tagService.getTagById(Long.parseLong(tagId));
+                    if (tag != null) {
+                        tags.add(tag);
+                    }
+                }
+            }
+            newTask.setTags(tags);
+
+            taskService.replaceTask(oldTask, newTask, newAssignee, manager);
+            resp.sendRedirect(req.getContextPath() + "/app/manager/dashboard");
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error replacing task", e);
+            req.setAttribute("error", e.getMessage());
+            handleReplaceGet(req, resp, manager);
+        }
+    }
+    }

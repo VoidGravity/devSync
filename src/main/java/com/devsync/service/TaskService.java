@@ -9,9 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.devsync.dao.UserDAO;
 
 public class TaskService {
     private static final Logger logger = Logger.getLogger(TaskService.class.getName());
+
+    private UserDAO userDAO;
+
+    public TaskService() {
+        this.userDAO = new UserDAO();
+    }
 
     public void createTask(Task task, User user) throws IllegalArgumentException {
         logger.info("Starting task creation validation");
@@ -112,26 +119,53 @@ public class TaskService {
     public Task getTaskById(Long id) {
         return TaskDAO.findTask(id);
     }
+    public void replaceTask(Task oldTask, Task newTask, User newAssignee, User manager) {
+        if (!"MANAGER".equals(manager.getManagerRole())) {
+            throw new IllegalArgumentException("Only managers can replace tasks");
+        }
 
+        // Mark old task as replaced and non-modifiable
+        oldTask.setReplacedByManager(true);
+        oldTask.setModifiable(false);
+        TaskDAO.updateTask(oldTask);
+
+        // Set up new task
+        newTask.setAssignedTo(newAssignee);
+        newTask.setCreatedBy(manager);
+        newTask.setCreationDate(new Date());
+        newTask.setModifiable(true);
+        newTask.setReplacedByManager(false);
+        TaskDAO.createTask(newTask);
+
+        logger.info(String.format("Task %d replaced with new task %d by manager %s",
+                oldTask.getId(), newTask.getId(), manager.getUsername()));
+    }
     public void updateTask(Task task, User user) {
         Task existingTask = TaskDAO.findTask(task.getId());
         if (existingTask == null) {
             throw new IllegalArgumentException("Task not found");
         }
 
-        if (!existingTask.getAssignedTo().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("You can only update your own tasks");
+        // Check if task is modifiable
+        if (!existingTask.isModifiable()) {
+            throw new IllegalArgumentException("This task cannot be modified as it was replaced by a manager");
+        }
+
+        // Check if user owns the task
+        boolean isOwnTask = existingTask.getAssignedTo().getId().equals(user.getId());
+
+        // If not own task, check modification tokens
+        if (!isOwnTask) {
+            if (user.getModificationTokens() <= 0) {
+                throw new IllegalArgumentException("You don't have enough modification tokens");
+            }
+            // Deduct token only if it's not the user's own task
+            user.setModificationTokens(user.getModificationTokens() - 1);
+            userDAO.updateUser(user);
         }
 
         validateTaskUpdate(task);
-
-        try {
-            TaskDAO.updateTask(task);
-            logger.info("Task updated successfully");
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error in updateTask", e);
-            throw new IllegalArgumentException("Failed to update task: " + e.getMessage());
-        }
+        TaskDAO.updateTask(task);
     }
 
     private void validateTaskUpdate(Task task) {
@@ -150,6 +184,32 @@ public class TaskService {
         if (task.getTags() == null || task.getTags().size() < 2) {
             throw new IllegalArgumentException("Task must have at least 2 tags");
         }
+    }
+    public void deleteTask(Task task, User user) {
+        Task existingTask = TaskDAO.findTask(task.getId());
+        if (existingTask == null) {
+            throw new IllegalArgumentException("Task not found");
+        }
+
+        // Check if task is modifiable
+        if (!existingTask.isModifiable()) {
+            throw new IllegalArgumentException("This task cannot be deleted as it was replaced by a manager");
+        }
+
+        // Check if user owns the task
+        boolean isOwnTask = existingTask.getCreatedBy().getId().equals(user.getId());
+
+        // If not own task, check deletion tokens
+        if (!isOwnTask) {
+            if (user.getDeletionTokens() <= 0) {
+                throw new IllegalArgumentException("You don't have enough deletion tokens");
+            }
+            // Deduct token only if it's not the user's own task
+            user.setDeletionTokens(user.getDeletionTokens() - 1);
+            userDAO.updateUser(user);
+        }
+
+        TaskDAO.deleteTask(task);
     }
 
 }

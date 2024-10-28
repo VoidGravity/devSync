@@ -46,6 +46,17 @@
             border-radius: 3px;
             background-color: #e0e0e0;
         }
+        .btn-replace {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .btn-replace:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -108,6 +119,7 @@
         <th>Due Date</th>
         <th>Status</th>
         <th>Tags</th>
+        <th>Actions</th>
     </tr>
     </thead>
     <tbody>
@@ -134,13 +146,20 @@
                 }
             %>
         </td>
+        <td>
+            <% if (!task.isReplacedByManager()) { %>
+            <a href="<%= request.getContextPath() %>/task/replace?id=<%= task.getId() %>" class="btn-replace">Replace Task</a>
+            <% } else { %>
+            <span>Task Replaced</span>
+            <% } %>
+        </td>
     </tr>
     <%
         }
     } else {
     %>
     <tr>
-        <td colspan="5">No tasks found</td>
+        <td colspan="6">No tasks found</td>
     </tr>
     <% } %>
     </tbody>
